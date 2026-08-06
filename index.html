@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#39bca2">
+  <meta name="description" content="适合孩子使用的离线 KET 单词记忆小工具">
+  <meta property="og:title" content="KET 单词星球">
+  <meta property="og:description" content="每天10词，按记忆规律自动复习">
+  <meta property="og:image" content="word-planet-hero.png">
+  <title>KET 单词星球</title>
+  <link rel="manifest" href="manifest.webmanifest?v=11">
+  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="overrides.css?v=11">
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="返回首页"><span class="brand-mark">🦉</span><span>KET 单词星球</span></a>
+    <div class="top-stats">
+      <button class="stat-chip" id="starsChip" aria-label="星星总数"><span>⭐</span><strong id="totalStars">0</strong></button>
+      <button class="avatar-button" id="settingsButton" aria-label="打开设置">⚙️</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="homeView" class="view active">
+      <section class="hero">
+        <div class="hero-content">
+          <p class="eyebrow">🚀 今日探险任务</p>
+          <h1>你好，小小单词探险家！</h1>
+          <p id="heroMessage">每天认识一点点，单词星球会越来越亮。</p>
+          <div class="hero-actions">
+            <button class="primary big" id="startButton"><span>出发学习</span><b id="newCountBadge">10 个新词</b></button>
+            <button class="secondary big" id="reviewButton"><span>开始复习</span><b id="reviewCountBadge">0 个待复习</b></button>
+          </div>
+        </div>
+        <img src="word-planet-hero.png" alt="拿着单词卡片的宇航员猫头鹰" class="hero-art">
+      </section>
+
+      <section class="today-grid">
+        <article class="mission-card purple">
+          <div class="mission-icon">📚</div>
+          <div><span>今天新学</span><strong><b id="todayNew">0</b> / <b id="dailyGoalLabel">10</b></strong></div>
+          <div class="ring" id="newRing" style="--p:0"><i></i></div>
+        </article>
+        <article class="mission-card mint">
+          <div class="mission-icon">🧠</div>
+          <div><span>今天复习</span><strong><b id="todayReview">0</b> 个</strong></div>
+          <div class="mini-planet">✓</div>
+        </article>
+        <article class="mission-card yellow">
+          <div class="mission-icon">🔥</div>
+          <div><span>连续学习</span><strong><b id="streakDays">0</b> 天</strong></div>
+          <div class="mini-planet warm">加油</div>
+        </article>
+      </section>
+
+      <section class="panel progress-panel">
+        <div class="panel-title"><div><p class="eyebrow dark">🌍 探险地图</p><h2>我的单词旅程</h2></div><span id="masteryText">已掌握 0 个</span></div>
+        <div class="progress-track"><div id="masteryBar"></div><span id="rocket">🚀</span></div>
+        <div class="progress-labels"><span>地球</span><span>月球</span><span>火星</span><span>单词星</span></div>
+      </section>
+
+      <section class="panel badges-panel">
+        <div class="panel-title"><div><p class="eyebrow dark">🏅 成就收藏</p><h2>点亮我的徽章</h2></div><button class="text-button" id="allWordsButton">查看单词本 ›</button></div>
+        <div class="badges" id="badges"></div>
+      </section>
+
+      <p class="storage-note">🔒 学习记录只保存在这台设备，不会上传个人信息。</p>
+    </section>
+
+    <section id="sessionView" class="view session-view" aria-live="polite">
+      <div class="session-top">
+        <button class="round-back" id="exitSession" aria-label="退出学习">‹</button>
+        <div class="session-progress"><div id="sessionBar"></div></div>
+        <span id="sessionStep">1 / 10</span>
+      </div>
+      <div class="mode-pill" id="modePill">认识新单词</div>
+      <article class="word-card" id="wordCard">
+        <div class="card-planet" id="cardPlanet">🪐</div>
+        <button class="sound-button" id="speakButton" aria-label="朗读单词">🔊</button>
+        <p class="part" id="wordPart">noun</p>
+        <h2 id="wordText">adventure</h2>
+        <p class="phonetic" id="phoneticText"></p>
+        <div class="reveal-area" id="revealArea">
+          <p class="hint">先在心里猜一猜它是什么意思</p>
+          <button class="primary reveal" id="revealButton">看看答案</button>
+        </div>
+        <div class="answer-area hidden" id="answerArea">
+          <h3 id="wordZh">冒险</h3>
+          <p class="example" id="wordExample"></p>
+          <p class="example-zh" id="exampleZh"></p>
+        </div>
+      </article>
+      <div class="answer-buttons hidden" id="answerButtons">
+        <button data-answer="again" class="answer-btn again"><span>😵</span><b>忘记了</b><small>重新学习</small></button>
+        <button data-answer="hard" class="answer-btn hard"><span>🤔</span><b>有点模糊</b><small>明天再见</small></button>
+        <button data-answer="good" class="answer-btn good"><span>😄</span><b>记住了</b><small>继续前进</small></button>
+      </div>
+    </section>
+
+    <section id="completeView" class="view complete-view">
+      <div class="celebration" aria-hidden="true">
+        <span class="decor-planet planet-ring"></span>
+        <span class="decor-planet planet-earth">🌎</span>
+        <span class="decor-planet planet-moon">🌕</span>
+        <span class="decor-planet planet-red"></span>
+      </div>
+      <div class="complete-orbit"><span>🦉</span></div>
+      <p class="eyebrow dark">任务完成</p>
+      <h1>今天的单词星球更亮了！</h1>
+      <p id="completeSummary">完成了 10 个单词</p>
+      <div class="reward-card"><span>⭐</span><div><small>本次获得</small><strong>+<b id="rewardStars">0</b> 星星</strong></div></div>
+      <button class="primary big home-button" id="backHome">开心收下</button>
+    </section>
+
+    <section id="wordsView" class="view words-view">
+      <div class="page-heading"><button class="round-back" id="wordsBack">‹</button><div><p class="eyebrow dark">📖 我的收藏</p><h1>单词本</h1></div></div>
+      <div class="filter-row">
+        <button class="filter active" data-filter="all">全部</button>
+        <button class="filter" data-filter="learning">学习中</button>
+        <button class="filter" data-filter="mastered">已掌握</button>
+      </div>
+      <label class="search-box"><span>🔎</span><input id="wordSearch" placeholder="搜索单词或中文"></label>
+      <div id="wordList" class="word-list"></div>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="settings-card">
+      <div class="dialog-title"><div><p class="eyebrow dark">家长设置</p><h2>学习小设置</h2></div><button value="close" aria-label="关闭">×</button></div>
+      <label class="range-setting"><span>每天学习新词 <b id="goalValue">10</b> 个</span><input id="dailyGoal" type="range" min="5" max="20" step="5" value="10"></label>
+      <div class="study-estimate" id="studyEstimate" aria-live="polite">
+        <div class="estimate-title"><span>🗓️</span><div><b>预计学习时间</b><small id="estimateProgress">正在计算词库进度…</small></div></div>
+        <div class="estimate-grid">
+          <div><small>学完剩余新词</small><strong id="newWordsDays">--</strong><span id="newWordsDate">--</span></div>
+          <div><small>完成最后一轮复习</small><strong id="reviewDays">--</strong><span id="reviewDate">--</span></div>
+        </div>
+        <p>按照当前学习记录估算；遇到记不清的词，完成时间会自动顺延。</p>
+      </div>
+      <label class="switch-row"><span><b>自动朗读</b><small>打开单词卡时读一遍</small></span><input id="autoSpeak" type="checkbox" checked></label>
+      <div class="setting-info"><b>记忆安排</b><p>新学当天 → 第1天 → 第3天 → 第7天 → 第14天 → 第30天。记不清的词会自动提前再见。</p></div>
+      <div class="backup-setting">
+        <div><b>学习记录备份</b><p>换网址或设备时，用备份文件恢复学习进度。</p></div>
+        <div class="backup-actions">
+          <button type="button" id="exportButton">导出记录</button>
+          <button type="button" id="importButton">导入记录</button>
+        </div>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
+      </div>
+      <button type="button" class="danger-link" id="resetButton">清空本机学习记录</button>
+      <button class="primary dialog-save" value="close">保存并关闭</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="words.js?v=12"></script>
+  <script src="app.js?v=12"></script>
+</body>
+</html>

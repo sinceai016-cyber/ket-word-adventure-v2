@@ -1,0 +1,99 @@
+/* 2026-08-06：黄色主按钮改为纯色无投影。 */
+.primary{box-shadow:none}
+
+/* 放大单词卡右上角的朗读按钮，方便孩子点击。 */
+.sound-button{width:78px;height:78px;border-radius:24px;font-size:34px}
+
+/* 家长设置中的学习与复习时间估算。 */
+.study-estimate{margin:-4px 0 18px;padding:17px;border-radius:20px;background:linear-gradient(135deg,#effbf8,#f3f0ff);border:1px solid #dceeea}
+.estimate-title{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.estimate-title>span{width:42px;height:42px;border-radius:14px;background:#fff;display:grid;place-items:center;font-size:21px}
+.estimate-title div{min-width:0}
+.estimate-title b{display:block;font-size:16px}
+.estimate-title small{display:block;color:#6f8290;margin-top:3px;white-space:normal;line-height:1.45}
+.estimate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.estimate-grid>div{background:rgba(255,255,255,.82);border-radius:16px;padding:13px 12px}
+.estimate-grid small{display:block;color:#7c8e9b;font-size:12px;line-height:1.35}
+.estimate-grid strong{display:block;color:#173451;font-size:22px;margin:5px 0 2px}
+.estimate-grid span{display:block;color:#2b9e8c;font-size:12px;font-weight:800}
+.study-estimate>p{margin:11px 2px 0;color:#7b8d99;font-size:11px;line-height:1.5}
+
+/* 本机学习记录可以导出为小文件，在新网址或新设备上恢复。 */
+.backup-setting{margin:0 0 14px;padding:15px;border-radius:18px;background:#fff9e8;border:1px solid #f3dfaa}
+.backup-setting b{display:block;color:#173451;font-size:15px}
+.backup-setting p{margin:4px 0 12px;color:#7b8790;font-size:12px;line-height:1.5}
+.backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.backup-actions button{min-height:44px;border:0;border-radius:13px;background:#fff;color:#9b6a00;font-weight:900;font-size:14px;box-shadow:inset 0 0 0 1px #f0d48a;cursor:pointer}
+.backup-actions button:last-child{background:#ffca47;color:#173451;box-shadow:none}
+.backup-actions button:active{transform:scale(.98)}
+
+/* 全站星点更稀疏、更淡，避免形成杂乱斑点。 */
+.stars{opacity:.14;background-size:150px 150px,112px 112px}
+
+/* 完成页：装饰始终位于内容下方，并以少量动态星球替代密集圆点。 */
+.complete-view{isolation:isolate}
+.complete-view>:not(.celebration){position:relative;z-index:2}
+.celebration{
+  inset:-28px -72px;
+  z-index:0;
+  overflow:hidden;
+  background:none;
+  animation:none;
+}
+.decor-planet{
+  position:absolute;
+  display:block;
+  user-select:none;
+  opacity:.62;
+  filter:drop-shadow(0 8px 12px rgba(58,100,119,.12));
+  will-change:transform;
+}
+.planet-ring{
+  left:2%;top:13%;width:58px;height:58px;border-radius:50%;
+  background:radial-gradient(circle at 32% 27%,#fff7c7 0 8%,#ffc85c 9% 42%,#e98d4f 43% 100%);
+  animation:planetDriftA 7s ease-in-out infinite;
+}
+.planet-ring:after{
+  content:"";position:absolute;left:-12px;top:20px;width:72px;height:18px;
+  border:5px solid rgba(121,95,213,.7);border-radius:50%;transform:rotate(-15deg);
+}
+.planet-earth{right:1%;top:6%;font-size:45px;animation:planetDriftB 8.5s ease-in-out infinite}
+.planet-moon{left:7%;bottom:8%;font-size:38px;animation:planetDriftB 6.5s ease-in-out -2s infinite}
+.planet-red{
+  right:8%;bottom:4%;width:32px;height:32px;border-radius:50%;opacity:.55;
+  background:radial-gradient(circle at 35% 30%,#ffc2a8 0 12%,#ec826f 13% 58%,#c95f58 59% 100%);
+  box-shadow:inset -5px -6px 0 rgba(128,57,67,.18);
+  animation:planetDriftA 7.8s ease-in-out -3s infinite;
+}
+.planet-red:after{content:"";position:absolute;left:8px;top:9px;width:6px;height:5px;border-radius:50%;background:rgba(151,73,72,.25)}
+
+@keyframes planetDriftA{
+  0%,100%{transform:translate3d(0,0,0) rotate(-8deg)}
+  50%{transform:translate3d(12px,-14px,0) rotate(10deg)}
+}
+@keyframes planetDriftB{
+  0%,100%{transform:translate3d(0,0,0) scale(.96)}
+  50%{transform:translate3d(-10px,13px,0) scale(1.06)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .decor-planet{animation:none}
+}
+
+/* 首页两个核心操作按钮：加宽、加高并强化文字层级。 */
+.hero-actions{gap:16px;width:min(100%,460px)}
+.hero-actions button{width:215px;min-height:78px;padding:13px 28px}
+.hero-actions button span{font-size:21px}
+.hero-actions button b{font-size:13px;margin-top:4px}
+
+@media(max-width:760px){
+  .hero-actions{width:100%;gap:12px}
+  .hero-actions button{width:auto;min-width:0;min-height:72px;padding:11px 16px}
+  .hero-actions button span{font-size:19px}
+  .celebration{inset:-18px -28px}
+  .planet-ring{width:44px;height:44px;left:0;top:17%}
+  .planet-ring:after{left:-9px;top:15px;width:55px;height:14px;border-width:4px}
+  .planet-earth{font-size:36px;right:0;top:9%}
+  .planet-moon{font-size:31px;left:2%;bottom:8%}
+  .planet-red{width:25px;height:25px;right:3%;bottom:5%}
+}

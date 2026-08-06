@@ -1,0 +1,10 @@
+{
+  "name":"KET 单词星球",
+  "short_name":"单词星球",
+  "description":"每天10词，按记忆规律自动复习",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#f2f8f8",
+  "theme_color":"#39bca2",
+  "icons":[{"src":"word-planet-hero.png","sizes":"2048x1152","type":"image/png","purpose":"any"}]
+}

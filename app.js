@@ -35,7 +35,7 @@
   function mastered(){return learned().filter(w=>getState(w.id).completed||getState(w.id).stage>=7)}
   function due(){const t=today();return learned().filter(w=>{const s=getState(w.id);return !s.completed&&s.due&&s.due<=t&&s.lastReviewed!==t})}
   function availableNew(){const remaining=Math.max(0,data.settings.goal-dayStats().new);return WORDS.filter(w=>!getState(w.id)).slice(0,remaining)}
-  function showView(id){$$('.view').forEach(v=>v.classList.remove('active'));$(`#${id}`).classList.add('active');scrollTo({top:0,behavior:'smooth'})}
+  function showView(id){$$('.view').forEach(v=>v.classList.remove('active'));$(`#${id}`).classList.add('active');document.body.classList.toggle('session-active',id==='sessionView');scrollTo({top:0,behavior:'smooth'})}
   function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1900)}
 
   function renderHome(){
@@ -76,7 +76,7 @@
 
   function start(type,continueTask=false){
     sessionType=type;session=type==='review'?due():availableNew();if(!session.length){toast(type==='review'?'今天没有待复习单词':'今天的新词已经学完啦');return}
-    sessionIndex=0;if(!continueTask){sessionReward=0;taskCompleted=0}$('#modePill').textContent=type==='review'?'唤醒记忆':'认识新单词';showView('sessionView');renderCard();
+    sessionIndex=0;if(!continueTask){sessionReward=0;taskCompleted=0}$('#sessionView').classList.toggle('review-session',type==='review');$('#modePill').textContent=type==='review'?'唤醒记忆':'认识新单词';showView('sessionView');renderCard();
   }
   function startSimpleTask(){if(due().length)start('review');else if(availableNew().length)start('new');else toast('今天的任务已经全部完成啦')}
   const normalizeSpelling=text=>String(text||'').normalize('NFKC').trim().toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ');
@@ -114,11 +114,9 @@
         [...wrap.children].forEach(choice=>{choice.disabled=true;if(choice.dataset.correct==='1')choice.classList.add('correct')});
         if(!correct)button.classList.add('wrong');
         simpleAnswerResult=correct?'good':'again';
-        feedback.textContent=correct?'答对了！':'没关系，绿色的是正确答案';
+        feedback.textContent=correct?'答对了，马上进入下一题！':'没关系，记住绿色答案，马上进入下一题';
         feedback.className=`spelling-feedback ${correct?'correct':'miss'}`;
-        $('#answerArea').classList.remove('hidden');
-        $('#simpleCardNext').textContent=correct?'答对了，继续':'记住答案，继续';
-        $('#simpleCardNext').classList.remove('hidden');
+        setTimeout(()=>answer(simpleAnswerResult,button),650);
       });
       wrap.appendChild(button);
     }
@@ -153,6 +151,7 @@
       setTimeout(()=>$('#spellingInput').focus(),180);
     }
     $('#wordCard').animate?.([{transform:'translateX(16px)',opacity:.4},{transform:'translateX(0)',opacity:1}],{duration:280,easing:'ease-out'});
+    if(sessionType==='review'&&matchMedia('(max-width:760px)').matches)scrollTo({top:0,behavior:'auto'});
     if(data.settings.autoSpeak&&(recallMode==='meaning'||recallMode==='audio-spelling'))setTimeout(()=>speak(w.word),300);
   }
   function reveal(){$('#revealArea').classList.add('hidden');$('#answerArea').classList.remove('hidden');$('#answerButtons').classList.remove('hidden')}
@@ -161,10 +160,12 @@
     const mask=[...word].map(char=>{if(/[a-z]/i.test(char)){letters++;if(!firstShown){firstShown=true;return char}return '_'}return char}).join(' ');
     return `再试一次：${mask}（共 ${letters} 个字母）`;
   }
-  function finishSpelling(result,message){
-    spellingResult=result;$('#spellingInput').disabled=true;$('#spellingActions').classList.add('hidden');$('#continueSpelling').classList.remove('hidden');
-    $('#continueSpelling').textContent=result==='again'?'记住答案，继续':'太棒了，继续';$('#spellingFeedback').textContent=message;
+  function finishSpelling(result,message,target=$('#checkSpelling')){
+    spellingResult=result;$('#spellingInput').disabled=true;$('#spellingActions').classList.add('hidden');
+    const autoNext=data.settings.simpleMode&&sessionType==='review';
+    $('#continueSpelling').classList.toggle('hidden',autoNext);$('#continueSpelling').textContent=result==='again'?'记住答案，继续':'太棒了，继续';$('#spellingFeedback').textContent=autoNext?`${message}，马上进入下一题`:message;
     $('#spellingFeedback').className=`spelling-feedback ${result==='again'?'miss':'correct'}`;
+    if(autoNext)setTimeout(()=>answer(result,target),750);
   }
   function checkSpelling(){
     const w=session[sessionIndex],value=normalizeSpelling($('#spellingInput').value),target=normalizeSpelling(w.word);
@@ -174,7 +175,7 @@
     if(spellingAttempts<2){$('#spellingFeedback').textContent=spellingHint(w.word);$('#spellingFeedback').className='spelling-feedback retry';$('#spellingInput').select()}
     else finishSpelling('again',`正确答案是：${w.word}`);
   }
-  function showSpellingAnswer(){const w=session[sessionIndex];finishSpelling('again',`正确答案是：${w.word}`)}
+  function showSpellingAnswer(){const w=session[sessionIndex];finishSpelling('again',`正确答案是：${w.word}`,$('#showSpellingAnswer'))}
   function answer(result,target){
     const w=session[sessionIndex],t=today(),wasNew=!getState(w.id),previous=getState(w.id)||{stage:0,seen:0,correct:0};
     const state=scheduleAnswer(previous,result,t);
@@ -307,6 +308,6 @@
   $('#resetButton').addEventListener('click',()=>{if(confirm('确定清空这台设备上的全部学习记录吗？这一步不能恢复。')){data=fresh();save();$('#settingsDialog').close();renderHome();toast('学习记录已清空')}});
   $('#starsChip').addEventListener('click',()=>toast(`你已经收集了 ${data.stars} 颗星星！`));
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){renderHome();showView('homeView')}});
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=16',{updateViaCache:'none'}).catch(()=>{});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=17',{updateViaCache:'none'}).catch(()=>{});
   renderHome();
 })();

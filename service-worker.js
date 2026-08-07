@@ -1,6 +1,6 @@
-const CACHE='ket-word-planet-v16';
+const CACHE='ket-word-planet-v17';
 const HOME='./index.html';
-const FILES=['./',HOME,'./styles.css?v=16','./overrides.css?v=16','./words.js?v=16','./schedule.js?v=16','./app.js?v=16','./manifest.webmanifest?v=16','./word-planet-hero.png'];
+const FILES=['./',HOME,'./styles.css?v=17','./overrides.css?v=17','./words.js?v=17','./schedule.js?v=17','./app.js?v=17','./manifest.webmanifest?v=17','./word-planet-hero.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));

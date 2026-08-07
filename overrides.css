@@ -103,3 +103,54 @@
 .review-ratio-label{display:block;margin-top:3px;color:#8a9aa8!important;font-size:11px!important;font-weight:700}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.recall-area{position:relative;z-index:1;margin-top:25px}.recall-type{display:inline-block;margin:0 0 14px;padding:7px 13px;border-radius:999px;background:#f0ebff;color:#6b50c8;font-size:14px;font-weight:900}.recall-area h3{margin:0 0 18px;color:#e56857;font-size:32px}.cloze-sentence{margin:0 0 8px;padding:18px;border-radius:18px;background:#f4f8fa;color:#173451;font-size:21px;font-weight:800;line-height:1.55}.cloze-translation{margin:0 0 18px;color:#8293a1;font-size:14px}.spelling-field{display:block;margin:12px auto 0;max-width:460px}.spelling-field input{width:100%;height:64px;border:2px solid #cfc4fa;border-radius:18px;padding:0 18px;background:#fff;color:#173451;font-size:25px;font-weight:800;text-align:center;outline:0;letter-spacing:.03em}.spelling-field input:focus{border-color:#8066dc;box-shadow:0 0 0 4px rgba(128,102,220,.12)}.spelling-field input:disabled{background:#f3f6f7;color:#6d7f8d}.spelling-feedback{min-height:28px;margin:12px 0 8px;color:#718390;font-size:14px;font-weight:800}.spelling-feedback.retry{color:#ae7200}.spelling-feedback.correct{color:#159d7d}.spelling-feedback.miss{color:#d05f52}.spelling-actions{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;max-width:460px;margin:0 auto}.spelling-actions button,.spelling-continue{min-height:52px;border:0;border-radius:16px;font-weight:900}.spelling-actions button:first-child{background:linear-gradient(135deg,#ffd658,#ffbd37)}.spelling-actions button:last-child{background:#f1f4f6;color:#617383}.spelling-continue{position:relative;z-index:2;min-width:230px;padding:0 26px;background:linear-gradient(135deg,#ffd658,#ffbd37)}
 
 @media(max-width:560px){.mission-card strong{font-size:21px}.recall-area{margin-top:18px}.recall-area h3{font-size:28px}.cloze-sentence{padding:15px;font-size:17px}.spelling-field input{height:60px;font-size:23px}.spelling-actions{grid-template-columns:1fr}.spelling-actions button{min-height:48px}}
+
+/* 经典/简单双模式：学习记录完全共用，只改变孩子看到的操作。 */
+.mode-switch{
+  min-height:43px;padding:0 15px;border:0;border-radius:16px;background:#fff;color:#6b7d8b;
+  box-shadow:0 8px 24px rgba(58,100,119,.11);font-size:13px;font-weight:800;white-space:nowrap
+}
+.mode-switch strong{color:#5e46b9;font-size:14px}
+.mode-switch.simple-active{background:#fff4c9;color:#9b7000;box-shadow:inset 0 0 0 2px #ffd35d}
+.mode-switch.simple-active strong{color:#8a6000}
+.simple-task-panel{display:none;width:min(100%,480px);margin-top:25px;padding:18px;border-radius:24px;background:rgba(255,255,255,.96);color:#173451;box-shadow:0 12px 28px rgba(16,91,79,.18)}
+.simple-mode .hero-actions{display:none}
+.simple-mode .simple-task-panel{display:block}
+.simple-mode .today-grid{display:none}
+.simple-task-heading{display:flex;align-items:center;gap:10px;text-align:left}
+.simple-task-heading>span{width:43px;height:43px;display:grid;place-items:center;border-radius:15px;background:#fff2bd;font-size:22px}
+.simple-task-heading>div{flex:1;min-width:0}
+.simple-task-heading b,.simple-task-heading small{display:block}
+.simple-task-heading b{font-size:17px}
+.simple-task-heading small{margin-top:3px;color:#728492;font-size:12px}
+.simple-task-heading>strong{color:#5d48b5;font-size:18px;white-space:nowrap}
+.simple-progress{height:10px;margin:15px 1px;border-radius:999px;background:#e7ecef;overflow:hidden}
+.simple-progress i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#43c8ae,#8066dc);transition:width .5s ease}
+.simple-start-button{width:100%;min-height:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px}
+.simple-start-button span{font-size:21px}
+.simple-start-button small{margin-top:3px;font-size:12px;opacity:.72}
+.simple-start-button:disabled{background:#dce4e8;color:#8796a0;cursor:default}
+
+.meaning-choice-area{position:relative;z-index:1;margin-top:24px;padding-top:22px;border-top:1px dashed #dbe3e8}
+.meaning-choices{display:grid;grid-template-columns:1fr;gap:11px;max-width:520px;margin:0 auto}
+.meaning-choices button{min-height:58px;padding:10px 16px;border:2px solid #e2e7eb;border-radius:17px;background:#f8fafb;color:#173451;font-size:18px;font-weight:900}
+.meaning-choices button:not(:disabled):active{transform:scale(.98)}
+.meaning-choices button.correct{border-color:#39bca2;background:#ddf8f1;color:#137d69}
+.meaning-choices button.wrong{border-color:#ff9587;background:#fff0ed;color:#c64f42}
+.simple-card-next{display:block;min-width:280px;min-height:64px;margin:18px auto 0;padding:0 30px;font-size:19px}
+
+@media(max-width:760px){
+  .mode-switch{padding:0 11px}
+  .mode-switch span{display:none}
+  .simple-mode .hero{min-height:560px}
+  .simple-task-panel{margin-top:18px;padding:15px}
+  .simple-task-heading>strong{font-size:16px}
+  .simple-card-next{width:100%;min-width:0;min-height:60px}
+}
+@media(max-width:430px){
+  .top-stats{gap:6px}
+  .mode-switch{min-height:40px;padding:0 9px;font-size:12px}
+  .mode-switch strong{font-size:12px}
+  .top-stats .stat-chip{height:40px;padding:0 9px}
+  .avatar-button{width:40px;height:40px}
+  .brand>span:last-child{display:none}
+}

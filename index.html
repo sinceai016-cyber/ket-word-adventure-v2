@@ -9,9 +9,9 @@
   <meta property="og:description" content="每天10词，按记忆规律自动复习">
   <meta property="og:image" content="word-planet-hero.png">
   <title>KET 单词星球</title>
-  <link rel="manifest" href="manifest.webmanifest?v=15">
-  <link rel="stylesheet" href="styles.css?v=15">
-  <link rel="stylesheet" href="overrides.css?v=15">
+  <link rel="manifest" href="manifest.webmanifest?v=16">
+  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="overrides.css?v=16">
 </head>
 <body>
   <div class="stars" aria-hidden="true"></div>
@@ -19,6 +19,7 @@
   <header class="topbar">
     <a class="brand" href="#home" aria-label="返回首页"><span class="brand-mark">🦉</span><span>KET 单词星球</span></a>
     <div class="top-stats">
+      <button class="mode-switch" id="modeSwitchButton" aria-label="切换学习模式"><span>切换：</span><strong id="modeSwitchText">经典模式</strong></button>
       <button class="stat-chip" id="starsChip" aria-label="星星总数"><span>⭐</span><strong id="totalStars">0</strong></button>
       <button class="avatar-button" id="settingsButton" aria-label="打开设置">⚙️</button>
     </div>
@@ -34,6 +35,11 @@
           <div class="hero-actions">
             <button class="primary big" id="startButton"><span>出发学习</span><b id="newCountBadge">10 个新词</b></button>
             <button class="secondary big" id="reviewButton"><span>开始复习</span><b id="reviewCountBadge">0 个待复习</b></button>
+          </div>
+          <div class="simple-task-panel" id="simpleTaskPanel">
+            <div class="simple-task-heading"><span>✨</span><div><b>今天只做这一件事</b><small id="simpleTaskDetail">系统会先复习，再学习新词</small></div><strong id="simpleTaskCount">0 / 0</strong></div>
+            <div class="simple-progress"><i id="simpleProgressBar"></i></div>
+            <button class="primary simple-start-button" id="simpleStartButton"><span id="simpleStartText">开始今天任务</span><small>点这里，跟着提示一步一步做</small></button>
           </div>
         </div>
         <img src="word-planet-hero.png" alt="拿着单词卡片的宇航员猫头鹰" class="hero-art">
@@ -103,7 +109,13 @@
           <div class="spelling-actions" id="spellingActions"><button class="primary" id="checkSpelling" type="button">检查拼写</button><button id="showSpellingAnswer" type="button">我不会，看看答案</button></div>
           <button class="primary spelling-continue hidden" id="continueSpelling" type="button">继续</button>
         </div>
+        <div class="meaning-choice-area hidden" id="meaningChoiceArea">
+          <p class="recall-type">选择正确的中文意思</p>
+          <div class="meaning-choices" id="meaningChoices"></div>
+          <p class="spelling-feedback" id="meaningChoiceFeedback" aria-live="polite"></p>
+        </div>
       </article>
+      <button class="primary simple-card-next hidden" id="simpleCardNext" type="button">学会了，下一个</button>
       <div class="answer-buttons hidden" id="answerButtons">
         <button data-answer="again" class="answer-btn again"><span>😵</span><b>忘记了</b><small>重新学习</small></button>
         <button data-answer="hard" class="answer-btn hard"><span>🤔</span><b>有点模糊</b><small>明天再见</small></button>
@@ -187,8 +199,8 @@
   </dialog>
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="words.js?v=15"></script>
-  <script src="schedule.js?v=15"></script>
-  <script src="app.js?v=15"></script>
+  <script src="words.js?v=16"></script>
+  <script src="schedule.js?v=16"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>

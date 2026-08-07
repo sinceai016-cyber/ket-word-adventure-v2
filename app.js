@@ -9,7 +9,7 @@
   const $$=s=>[...document.querySelectorAll(s)];
   const realToday=()=>new Date().toLocaleDateString('en-CA');
   const formatDate=date=>new Date(`${date}T12:00:00`).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
-  const fresh=()=>({version:1,settings:{goal:10,autoSpeak:true},words:{},stars:0,rewarded:{},days:{}});
+  const fresh=()=>({version:1,settings:{goal:10,autoSpeak:true,simpleMode:false},words:{},stars:0,rewarded:{},days:{}});
   function normalize(raw){
     const base=fresh(),source=raw&&typeof raw==='object'?raw:{};
     return {...base,...source,settings:{...base.settings,...(source.settings||{})},words:source.words&&typeof source.words==='object'?source.words:{},rewarded:source.rewarded&&typeof source.rewarded==='object'?source.rewarded:{},days:source.days&&typeof source.days==='object'?source.days:{},stars:Number.isFinite(Number(source.stars))?Number(source.stars):0};
@@ -22,8 +22,8 @@
   }
   let testMeta=loadTestMeta();
   const today=()=>testMeta.active?testMeta.simulatedDate:realToday();
-  let data=load(),session=[],sessionType='new',sessionIndex=0,sessionReward=0,currentFilter='all',skipSettingsClose=false;
-  let recallMode='meaning',spellingAttempts=0,usedAudioHint=false,spellingResult='again';
+  let data=load(),session=[],sessionType='new',sessionIndex=0,sessionReward=0,taskCompleted=0,currentFilter='all',skipSettingsClose=false;
+  let recallMode='meaning',spellingAttempts=0,usedAudioHint=false,spellingResult='again',simpleAnswerResult='good';
 
   function activeKey(){return testMeta.active?TEST_KEY:KEY}
   function load(){try{return normalize(JSON.parse(localStorage.getItem(activeKey())||'{}'))}catch{return fresh()}}
@@ -43,6 +43,9 @@
     $('#testModeBar').hidden=!testMeta.active;
     $('#testModeDate').textContent=testMeta.active?formatDate(today()):'';
     document.body.classList.toggle('test-mode',testMeta.active);
+    document.body.classList.toggle('simple-mode',data.settings.simpleMode);
+    $('#modeSwitchText').textContent=data.settings.simpleMode?'简单模式':'经典模式';
+    $('#modeSwitchButton').classList.toggle('simple-active',data.settings.simpleMode);
     $('#totalStars').textContent=data.stars;$('#todayNew').textContent=d.new;$('#todayReviewDone').textContent=d.review;$('#todayReviewRemaining').textContent=reviews.length;
     $('#dailyGoalLabel').textContent=data.settings.goal;$('#newCountBadge').textContent=newWords.length?`${newWords.length} 个新词`:'今日已完成';
     $('#reviewCountBadge').textContent=reviews.length?`${d.review} 已复习 / ${reviews.length} 待复习`:d.review?`${d.review} 已复习 / 0 待复习`:'今天无待复习';
@@ -52,6 +55,13 @@
     $('#streakDays').textContent=streak();$('#masteryText').textContent=`已掌握 ${done} 个 · 已遇见 ${known} 个`;
     const p=Math.min(100,Math.round(known/WORDS.length*100));$('#masteryBar').style.width=`${p}%`;$('#rocket').style.left=`${p}%`;
     $('#heroMessage').textContent=reviews.length?`有 ${reviews.length} 个老朋友在等你复习，先和它们打个招呼吧！`:d.new>=data.settings.goal?'今天任务完成啦，明天继续探索新星球！':'每天认识一点点，单词星球会越来越亮。';
+    const simpleDone=d.review+d.new,simpleRemaining=reviews.length+newWords.length,simpleTotal=simpleDone+simpleRemaining;
+    const simplePercent=simpleTotal?Math.round(simpleDone/simpleTotal*100):100;
+    $('#simpleTaskCount').textContent=`${simpleDone} / ${simpleTotal}`;
+    $('#simpleProgressBar').style.width=`${simplePercent}%`;
+    $('#simpleTaskDetail').textContent=`复习 ${d.review}/${d.review+reviews.length} · 新学 ${d.new}/${data.settings.goal}`;
+    $('#simpleStartText').textContent=simpleRemaining?(simpleDone?'继续今天任务':'开始今天任务'):'今天任务完成';
+    $('#simpleStartButton').disabled=!simpleRemaining;
     renderBadges(known,done);
   }
   function streak(){
@@ -64,10 +74,11 @@
     $('#badges').innerHTML=items.map(x=>`<div class="badge ${x[3]?'unlocked':''}"><span>${x[0]}</span><b>${x[1]}</b><small>${x[3]?'已点亮':x[2]}</small></div>`).join('');
   }
 
-  function start(type){
+  function start(type,continueTask=false){
     sessionType=type;session=type==='review'?due():availableNew();if(!session.length){toast(type==='review'?'今天没有待复习单词':'今天的新词已经学完啦');return}
-    sessionIndex=0;sessionReward=0;$('#modePill').textContent=type==='review'?'唤醒记忆':'认识新单词';showView('sessionView');renderCard();
+    sessionIndex=0;if(!continueTask){sessionReward=0;taskCompleted=0}$('#modePill').textContent=type==='review'?'唤醒记忆':'认识新单词';showView('sessionView');renderCard();
   }
+  function startSimpleTask(){if(due().length)start('review');else if(availableNew().length)start('new');else toast('今天的任务已经全部完成啦')}
   const normalizeSpelling=text=>String(text||'').normalize('NFKC').trim().toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ');
   const escapeRegExp=text=>String(text).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   function clozeText(word){
@@ -81,16 +92,54 @@
     if((stage===3||stage>=6)&&clozeText(word))return 'cloze';
     return 'meaning-spelling';
   }
+  function meaningOptions(word){
+    const seen=new Set([word.zh]),choices=[{text:word.zh,correct:true}];
+    const pool=WORDS.filter(item=>item.id!==word.id&&item.zh&&!seen.has(item.zh));
+    let seed=[...word.word].reduce((sum,char)=>sum+char.charCodeAt(0),0);
+    while(choices.length<3&&pool.length){
+      seed=(seed*9301+49297)%233280;
+      const item=pool[seed%pool.length];
+      if(!seen.has(item.zh)){seen.add(item.zh);choices.push({text:item.zh,correct:false})}
+    }
+    const shift=seed%choices.length;
+    return [...choices.slice(shift),...choices.slice(0,shift)];
+  }
+  function renderMeaningChoices(word){
+    const wrap=$('#meaningChoices'),feedback=$('#meaningChoiceFeedback');
+    simpleAnswerResult='again';feedback.textContent='';feedback.className='spelling-feedback';wrap.innerHTML='';
+    for(const option of meaningOptions(word)){
+      const button=document.createElement('button');button.type='button';button.textContent=option.text;button.dataset.correct=option.correct?'1':'0';
+      button.addEventListener('click',()=>{
+        const correct=button.dataset.correct==='1';
+        [...wrap.children].forEach(choice=>{choice.disabled=true;if(choice.dataset.correct==='1')choice.classList.add('correct')});
+        if(!correct)button.classList.add('wrong');
+        simpleAnswerResult=correct?'good':'again';
+        feedback.textContent=correct?'答对了！':'没关系，绿色的是正确答案';
+        feedback.className=`spelling-feedback ${correct?'correct':'miss'}`;
+        $('#answerArea').classList.remove('hidden');
+        $('#simpleCardNext').textContent=correct?'答对了，继续':'记住答案，继续';
+        $('#simpleCardNext').classList.remove('hidden');
+      });
+      wrap.appendChild(button);
+    }
+  }
   function renderCard(){
     const w=session[sessionIndex];if(!w){finishSession();return}
     $('#sessionStep').textContent=`${sessionIndex+1} / ${session.length}`;$('#sessionBar').style.width=`${sessionIndex/session.length*100}%`;
     recallMode=sessionType==='review'?chooseReviewMode(w):'meaning';spellingAttempts=0;usedAudioHint=false;spellingResult='again';
     $('#cardPlanet').textContent=w.emoji;$('#wordPart').textContent=w.part;$('#wordText').textContent=w.word;$('#phoneticText').textContent=w.ipa;
     $('#wordZh').textContent=w.zh;$('#wordExample').textContent=w.example;$('#exampleZh').textContent=w.exampleZh;
-    $('#answerArea').classList.add('hidden');$('#answerButtons').classList.add('hidden');$('#recallArea').classList.add('hidden');
+    $('#answerArea').classList.add('hidden');$('#answerButtons').classList.add('hidden');$('#recallArea').classList.add('hidden');$('#meaningChoiceArea').classList.add('hidden');$('#simpleCardNext').classList.add('hidden');
     $('#wordPart').classList.remove('hidden');$('#wordText').classList.remove('hidden');$('#phoneticText').classList.remove('hidden');
     if(recallMode==='meaning'){
-      $('#revealArea').classList.remove('hidden');$('#modePill').textContent=sessionType==='review'?'英文辨义':'认识新单词';
+      if(data.settings.simpleMode&&sessionType==='review'){
+        $('#revealArea').classList.add('hidden');$('#meaningChoiceArea').classList.remove('hidden');$('#modePill').textContent='选出中文意思';renderMeaningChoices(w);
+      }else if(data.settings.simpleMode){
+        $('#revealArea').classList.add('hidden');$('#answerArea').classList.remove('hidden');$('#modePill').textContent='认识新单词';
+        simpleAnswerResult='good';$('#simpleCardNext').textContent='学会了，下一个';$('#simpleCardNext').classList.remove('hidden');
+      }else{
+        $('#revealArea').classList.remove('hidden');$('#modePill').textContent=sessionType==='review'?'英文辨义':'认识新单词';
+      }
     }else{
       $('#revealArea').classList.add('hidden');$('#recallArea').classList.remove('hidden');
       $('#wordPart').classList.add('hidden');$('#wordText').classList.add('hidden');$('#phoneticText').classList.add('hidden');
@@ -134,14 +183,20 @@
     if(result==='good')state.correct++;
     data.words[w.id]=state;
     const rewardKey=`${t}-${w.id}`;if(!data.rewarded[rewardKey]){data.rewarded[rewardKey]=1;data.stars++;dayStats().stars++;sessionReward++}
-    save();$('#totalStars').textContent=data.stars;starBurst(target);sessionIndex++;setTimeout(renderCard,260);
+    taskCompleted++;save();$('#totalStars').textContent=data.stars;starBurst(target);sessionIndex++;setTimeout(renderCard,260);
   }
   function starBurst(target){
     const box=target?.getBoundingClientRect?.()||{left:innerWidth/2,top:innerHeight/2,width:1,height:1};
     for(let i=0;i<8;i++){const s=document.createElement('i');s.textContent='⭐';s.style.cssText=`position:fixed;z-index:20;left:${box.left+box.width/2}px;top:${box.top}px;font-style:normal;pointer-events:none;font-size:${12+Math.random()*12}px;--x:${(Math.random()-.5)*150}px;--y:${-40-Math.random()*100}px`;document.body.appendChild(s);s.animate([{transform:'translate(0,0) scale(.4)',opacity:1},{transform:'translate(var(--x),var(--y)) scale(1.1)',opacity:0}],{duration:700,easing:'ease-out'}).onfinish=()=>s.remove()}
   }
   function finishSession(){
-    $('#sessionBar').style.width='100%';$('#rewardStars').textContent=sessionReward;$('#completeSummary').textContent=`完成了 ${session.length} 个${sessionType==='review'?'复习':'新单词'}，每颗星都很闪亮！`;showView('completeView')
+    if(data.settings.simpleMode&&sessionType==='review'&&availableNew().length){
+      $('#sessionBar').style.width='100%';toast('复习完成，接着学习今天的新词');
+      setTimeout(()=>start('new',true),420);return;
+    }
+    $('#sessionBar').style.width='100%';$('#rewardStars').textContent=sessionReward;
+    $('#completeSummary').textContent=data.settings.simpleMode?`今天一共完成了 ${taskCompleted} 个单词，任务完成！`:`完成了 ${session.length} 个${sessionType==='review'?'复习':'新单词'}，每颗星都很闪亮！`;
+    showView('completeView')
   }
   function speak(text){if(!('speechSynthesis'in window)){toast('这台设备暂不支持朗读');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-GB';u.rate=.78;speechSynthesis.speak(u)}
 
@@ -226,11 +281,16 @@
     skipSettingsClose=true;$('#settingsDialog').close();renderHome();showView('homeView');toast('已返回正式学习模式');
   }
 
-  $('#startButton').addEventListener('click',()=>start('new'));$('#reviewButton').addEventListener('click',()=>start('review'));
+  $('#startButton').addEventListener('click',()=>start('new'));$('#reviewButton').addEventListener('click',()=>start('review'));$('#simpleStartButton').addEventListener('click',startSimpleTask);
+  $('#modeSwitchButton').addEventListener('click',()=>{
+    if($('#sessionView').classList.contains('active')&&!confirm('切换模式需要先回到首页。已经完成的单词会保留，确定切换吗？'))return;
+    data.settings.simpleMode=!data.settings.simpleMode;save();renderHome();showView('homeView');toast(data.settings.simpleMode?'已切换到简单模式':'已切换到经典模式');
+  });
   $('#revealButton').addEventListener('click',reveal);$('#speakButton').addEventListener('click',()=>{if(recallMode!=='meaning'&&recallMode!=='audio-spelling')usedAudioHint=true;speak(session[sessionIndex].word)});
   $('#checkSpelling').addEventListener('click',checkSpelling);$('#showSpellingAnswer').addEventListener('click',showSpellingAnswer);
   $('#spellingInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();checkSpelling()}});
   $('#continueSpelling').addEventListener('click',event=>answer(spellingResult,event.currentTarget));
+  $('#simpleCardNext').addEventListener('click',event=>answer(simpleAnswerResult,event.currentTarget));
   $$('.answer-btn').forEach(b=>b.addEventListener('click',e=>answer(e.currentTarget.dataset.answer,e.currentTarget)));
   $('#exitSession').addEventListener('click',()=>{if(confirm('要先回到首页吗？已经完成的单词会保留。')){renderHome();showView('homeView')}});
   $('#backHome').addEventListener('click',()=>{renderHome();showView('homeView')});
@@ -247,6 +307,6 @@
   $('#resetButton').addEventListener('click',()=>{if(confirm('确定清空这台设备上的全部学习记录吗？这一步不能恢复。')){data=fresh();save();$('#settingsDialog').close();renderHome();toast('学习记录已清空')}});
   $('#starsChip').addEventListener('click',()=>toast(`你已经收集了 ${data.stars} 颗星星！`));
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){renderHome();showView('homeView')}});
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=15',{updateViaCache:'none'}).catch(()=>{});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=16',{updateViaCache:'none'}).catch(()=>{});
   renderHome();
 })();

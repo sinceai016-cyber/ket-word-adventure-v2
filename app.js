@@ -190,6 +190,7 @@
   $('#exportButton').addEventListener('click',exportProgress);$('#importButton').addEventListener('click',()=>$('#importFile').click());$('#importFile').addEventListener('change',e=>{const file=e.target.files?.[0];if(file)importProgress(file)});
   $('#enterTestMode').addEventListener('click',enterTestMode);
   $$('.test-day-button').forEach(button=>button.addEventListener('click',()=>jumpTestDay(button.dataset.day)));
+  $('#nextTestDay').addEventListener('click',()=>jumpTestDay(dayDistance(testMeta.startedOn,testMeta.simulatedDate)+1));
   $('#resetTestMode').addEventListener('click',resetTestMode);$('#exitTestMode').addEventListener('click',exitTestMode);
   $('#resetButton').addEventListener('click',()=>{if(confirm('确定清空这台设备上的全部学习记录吗？这一步不能恢复。')){data=fresh();save();$('#settingsDialog').close();renderHome();toast('学习记录已清空')}});
   $('#starsChip').addEventListener('click',()=>toast(`你已经收集了 ${data.stars} 颗星星！`));

@@ -9,9 +9,9 @@
   <meta property="og:description" content="每天10词，按记忆规律自动复习">
   <meta property="og:image" content="word-planet-hero.png">
   <title>KET 单词星球</title>
-  <link rel="manifest" href="manifest.webmanifest?v=14">
-  <link rel="stylesheet" href="styles.css?v=14">
-  <link rel="stylesheet" href="overrides.css?v=14">
+  <link rel="manifest" href="manifest.webmanifest?v=15">
+  <link rel="stylesheet" href="styles.css?v=15">
+  <link rel="stylesheet" href="overrides.css?v=15">
 </head>
 <body>
   <div class="stars" aria-hidden="true"></div>
@@ -47,7 +47,7 @@
         </article>
         <article class="mission-card mint">
           <div class="mission-icon">🧠</div>
-          <div><span>今天复习</span><strong><b id="todayReview">0</b> 个</strong></div>
+          <div><span>今天复习</span><strong><b id="todayReviewDone">0</b> / <b id="todayReviewRemaining">0</b></strong><small class="review-ratio-label">已复习 / 待复习</small></div>
           <div class="mini-planet">✓</div>
         </article>
         <article class="mission-card yellow">
@@ -92,6 +92,16 @@
           <h3 id="wordZh">冒险</h3>
           <p class="example" id="wordExample"></p>
           <p class="example-zh" id="exampleZh"></p>
+        </div>
+        <div class="recall-area hidden" id="recallArea">
+          <p class="recall-type" id="recallType">听读音，拼出这个单词</p>
+          <h3 id="recallChinese"></h3>
+          <p class="cloze-sentence hidden" id="clozeSentence"></p>
+          <p class="cloze-translation hidden" id="clozeTranslation"></p>
+          <label class="spelling-field"><span class="sr-only">输入英文单词</span><input id="spellingInput" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="在这里输入英文"></label>
+          <p class="spelling-feedback" id="spellingFeedback" aria-live="polite"></p>
+          <div class="spelling-actions" id="spellingActions"><button class="primary" id="checkSpelling" type="button">检查拼写</button><button id="showSpellingAnswer" type="button">我不会，看看答案</button></div>
+          <button class="primary spelling-continue hidden" id="continueSpelling" type="button">继续</button>
         </div>
       </article>
       <div class="answer-buttons hidden" id="answerButtons">
@@ -177,8 +187,8 @@
   </dialog>
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="words.js?v=14"></script>
-  <script src="schedule.js?v=14"></script>
-  <script src="app.js?v=14"></script>
+  <script src="words.js?v=15"></script>
+  <script src="schedule.js?v=15"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

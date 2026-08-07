@@ -2,33 +2,46 @@
   'use strict';
   const WORDS=window.KET_WORDS||[];
   const KEY='ket-word-planet-v1';
-  const INTERVALS=[0,1,3,7,14,30,60];
+  const TEST_KEY='ket-word-planet-test-v1';
+  const TEST_META_KEY='ket-word-planet-test-meta-v1';
+  const {MILESTONES,addDays,dayDistance,scheduleAnswer,finalReviewDate}=window.KET_SCHEDULER;
   const $=s=>document.querySelector(s);
   const $$=s=>[...document.querySelectorAll(s)];
-  const today=()=>new Date().toLocaleDateString('en-CA');
-  const addDays=(date,n)=>{const d=new Date(`${date}T12:00:00`);d.setDate(d.getDate()+n);return d.toLocaleDateString('en-CA')};
-  const dayDistance=(from,to)=>Math.round((new Date(`${to}T12:00:00`)-new Date(`${from}T12:00:00`))/86400000);
+  const realToday=()=>new Date().toLocaleDateString('en-CA');
   const formatDate=date=>new Date(`${date}T12:00:00`).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
   const fresh=()=>({version:1,settings:{goal:10,autoSpeak:true},words:{},stars:0,rewarded:{},days:{}});
   function normalize(raw){
     const base=fresh(),source=raw&&typeof raw==='object'?raw:{};
     return {...base,...source,settings:{...base.settings,...(source.settings||{})},words:source.words&&typeof source.words==='object'?source.words:{},rewarded:source.rewarded&&typeof source.rewarded==='object'?source.rewarded:{},days:source.days&&typeof source.days==='object'?source.days:{},stars:Number.isFinite(Number(source.stars))?Number(source.stars):0};
   }
-  let data=load(),session=[],sessionType='new',sessionIndex=0,sessionReward=0,currentFilter='all';
+  function loadTestMeta(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(TEST_META_KEY)||'{}');
+      return {active:!!raw.active,startedOn:raw.startedOn||realToday(),simulatedDate:raw.simulatedDate||realToday()};
+    }catch{return {active:false,startedOn:realToday(),simulatedDate:realToday()}}
+  }
+  let testMeta=loadTestMeta();
+  const today=()=>testMeta.active?testMeta.simulatedDate:realToday();
+  let data=load(),session=[],sessionType='new',sessionIndex=0,sessionReward=0,currentFilter='all',skipSettingsClose=false;
 
-  function load(){try{return normalize(JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return fresh()}}
-  function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+  function activeKey(){return testMeta.active?TEST_KEY:KEY}
+  function load(){try{return normalize(JSON.parse(localStorage.getItem(activeKey())||'{}'))}catch{return fresh()}}
+  function save(){localStorage.setItem(activeKey(),JSON.stringify(data))}
+  function saveTestMeta(){localStorage.setItem(TEST_META_KEY,JSON.stringify(testMeta))}
   function dayStats(){return data.days[today()]||(data.days[today()]={new:0,review:0,stars:0})}
   function getState(id){return data.words[id]}
   function learned(){return WORDS.filter(w=>getState(w.id))}
-  function mastered(){return learned().filter(w=>getState(w.id).stage>=6)}
-  function due(){const t=today();return learned().filter(w=>getState(w.id).due<=t&&getState(w.id).lastReviewed!==t)}
+  function mastered(){return learned().filter(w=>getState(w.id).completed||getState(w.id).stage>=7)}
+  function due(){const t=today();return learned().filter(w=>{const s=getState(w.id);return !s.completed&&s.due&&s.due<=t&&s.lastReviewed!==t})}
   function availableNew(){const remaining=Math.max(0,data.settings.goal-dayStats().new);return WORDS.filter(w=>!getState(w.id)).slice(0,remaining)}
   function showView(id){$$('.view').forEach(v=>v.classList.remove('active'));$(`#${id}`).classList.add('active');scrollTo({top:0,behavior:'smooth'})}
   function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1900)}
 
   function renderHome(){
     const d=dayStats(),newWords=availableNew(),reviews=due(),known=learned().length,done=mastered().length;
+    $('#testModeBar').hidden=!testMeta.active;
+    $('#testModeDate').textContent=testMeta.active?formatDate(today()):'';
+    document.body.classList.toggle('test-mode',testMeta.active);
     $('#totalStars').textContent=data.stars;$('#todayNew').textContent=d.new;$('#todayReview').textContent=d.review;
     $('#dailyGoalLabel').textContent=data.settings.goal;$('#newCountBadge').textContent=newWords.length?`${newWords.length} 个新词`:'今日已完成';
     $('#reviewCountBadge').textContent=reviews.length?`${reviews.length} 个待复习`:'今天无待复习';
@@ -65,12 +78,11 @@
   }
   function reveal(){$('#revealArea').classList.add('hidden');$('#answerArea').classList.remove('hidden');$('#answerButtons').classList.remove('hidden')}
   function answer(result,target){
-    const w=session[sessionIndex],t=today(),wasNew=!getState(w.id),state=getState(w.id)||{stage:0,seen:0,correct:0};
+    const w=session[sessionIndex],t=today(),wasNew=!getState(w.id),previous=getState(w.id)||{stage:0,seen:0,correct:0};
+    const state=scheduleAnswer(previous,result,t);
     state.seen++;state.lastReviewed=t;
     if(wasNew){state.learnedOn=t;dayStats().new++}else dayStats().review++;
-    if(result==='good'){state.stage=Math.min(6,(state.stage||0)+1);state.correct++;state.due=addDays(t,INTERVALS[state.stage]||60)}
-    if(result==='hard'){state.stage=Math.max(1,state.stage||0);state.due=addDays(t,1)}
-    if(result==='again'){state.stage=0;state.due=t}
+    if(result==='good')state.correct++;
     data.words[w.id]=state;
     const rewardKey=`${t}-${w.id}`;if(!data.rewarded[rewardKey]){data.rewarded[rewardKey]=1;data.stars++;dayStats().stars++;sessionReward++}
     save();$('#totalStars').textContent=data.stars;starBurst(target);sessionIndex++;setTimeout(renderCard,260);
@@ -86,9 +98,9 @@
 
   function renderWords(){
     const q=$('#wordSearch').value.trim().toLowerCase();let list=WORDS.filter(w=>w.word.includes(q)||w.zh.includes(q));
-    if(currentFilter==='learning')list=list.filter(w=>getState(w.id)&&getState(w.id).stage<6);
-    if(currentFilter==='mastered')list=list.filter(w=>getState(w.id)?.stage>=6);
-    $('#wordList').innerHTML=list.map(w=>{const s=getState(w.id),kind=!s?'new':s.stage>=6?'mastered':'learning',label=!s?'未遇见':s.stage>=6?'已掌握':`记忆等级 ${s.stage}`;return `<article class="word-row ${kind}"><span class="state">${!s?'🌑':s.stage>=6?'🌟':'🌱'}</span><div><b>${w.word}</b><small>${w.zh} · ${label}</small></div><button aria-label="朗读 ${w.word}" data-speak="${w.word}">🔊</button></article>`}).join('')||'<p>这里还没有单词。</p>';
+    if(currentFilter==='learning')list=list.filter(w=>getState(w.id)&&!getState(w.id).completed&&getState(w.id).stage<7);
+    if(currentFilter==='mastered')list=list.filter(w=>getState(w.id)?.completed||getState(w.id)?.stage>=7);
+    $('#wordList').innerHTML=list.map(w=>{const s=getState(w.id),done=s&&(s.completed||s.stage>=7),kind=!s?'new':done?'mastered':'learning',label=!s?'未遇见':done?'已掌握':`记忆等级 ${s.stage}`;return `<article class="word-row ${kind}"><span class="state">${!s?'🌑':done?'🌟':'🌱'}</span><div><b>${w.word}</b><small>${w.zh} · ${label}</small></div><button aria-label="朗读 ${w.word}" data-speak="${w.word}">🔊</button></article>`}).join('')||'<p>这里还没有单词。</p>';
   }
   function estimatePlan(goal){
     const known=learned(),remaining=Math.max(0,WORDS.length-known.length),stats=dayStats();
@@ -100,12 +112,10 @@
     }
     let finalReviewOffset=0;
     for(const word of known){
-      const state=getState(word.id)||{},stage=Math.max(0,Math.min(6,state.stage||0));
-      const dueOffset=Math.max(0,dayDistance(today(),state.due||today()));
-      const remainingIntervals=INTERVALS.slice(stage+1).reduce((sum,days)=>sum+days,0);
-      finalReviewOffset=Math.max(finalReviewOffset,dueOffset+remainingIntervals);
+      const finalDate=finalReviewDate(getState(word.id));
+      if(finalDate)finalReviewOffset=Math.max(finalReviewOffset,Math.max(0,dayDistance(today(),finalDate)));
     }
-    if(remaining>0)finalReviewOffset=Math.max(finalReviewOffset,lastNewOffset+INTERVALS.slice(1).reduce((sum,days)=>sum+days,0));
+    if(remaining>0)finalReviewOffset=Math.max(finalReviewOffset,lastNewOffset+MILESTONES[MILESTONES.length-1]);
     return {known:known.length,remaining,newStudyDays,lastNewOffset,finalReviewOffset};
   }
   function updateStudyEstimate(goal){
@@ -133,6 +143,40 @@
   }
   function openSettings(){$('#dailyGoal').value=data.settings.goal;$('#goalValue').textContent=data.settings.goal;$('#autoSpeak').checked=data.settings.autoSpeak;updateStudyEstimate(data.settings.goal);$('#settingsDialog').showModal()}
 
+  function renderTestControls(){
+    $('#testInactive').hidden=testMeta.active;
+    $('#testActive').hidden=!testMeta.active;
+    if(!testMeta.active)return;
+    $('#testStartDate').textContent=formatDate(testMeta.startedOn);
+    $('#testCurrentDate').textContent=formatDate(testMeta.simulatedDate);
+    const currentDay=dayDistance(testMeta.startedOn,testMeta.simulatedDate);
+    $$('.test-day-button').forEach(button=>button.classList.toggle('active',Number(button.dataset.day)===currentDay));
+  }
+  function enterTestMode(){
+    if(!confirm('进入家长测试模式后，将使用一套独立的测试记录。孩子的正式学习记录不会改变。确定进入吗？'))return;
+    let formal=fresh();
+    try{formal=normalize(JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{}
+    testMeta={active:true,startedOn:realToday(),simulatedDate:realToday()};
+    data=fresh();data.settings={...formal.settings,goal:5};
+    localStorage.setItem(TEST_KEY,JSON.stringify(data));saveTestMeta();
+    skipSettingsClose=true;$('#settingsDialog').close();renderHome();showView('homeView');toast('已进入家长测试模式');
+  }
+  function jumpTestDay(day){
+    testMeta.simulatedDate=addDays(testMeta.startedOn,Number(day)||0);saveTestMeta();
+    renderTestControls();updateStudyEstimate(data.settings.goal);renderHome();toast(`已模拟到第 ${day} 天`);
+  }
+  function resetTestMode(){
+    if(!confirm('确定清空测试记录，并回到测试第0天吗？正式学习记录不会受到影响。'))return;
+    const settings={...data.settings,goal:5};data=fresh();data.settings=settings;
+    testMeta.startedOn=realToday();testMeta.simulatedDate=realToday();save();saveTestMeta();
+    renderTestControls();updateStudyEstimate(data.settings.goal);renderHome();toast('测试记录已重新开始');
+  }
+  function exitTestMode(){
+    if(!confirm('退出测试模式并返回孩子的正式学习记录吗？测试记录会保留，正式记录不会改变。'))return;
+    testMeta.active=false;saveTestMeta();data=load();
+    skipSettingsClose=true;$('#settingsDialog').close();renderHome();showView('homeView');toast('已返回正式学习模式');
+  }
+
   $('#startButton').addEventListener('click',()=>start('new'));$('#reviewButton').addEventListener('click',()=>start('review'));
   $('#revealButton').addEventListener('click',reveal);$('#speakButton').addEventListener('click',()=>speak(session[sessionIndex].word));
   $$('.answer-btn').forEach(b=>b.addEventListener('click',e=>answer(e.currentTarget.dataset.answer,e.currentTarget)));
@@ -141,12 +185,15 @@
   $('#allWordsButton').addEventListener('click',()=>{renderWords();showView('wordsView')});$('#wordsBack').addEventListener('click',()=>{renderHome();showView('homeView')});
   $('#wordSearch').addEventListener('input',renderWords);$('.filter-row').addEventListener('click',e=>{if(!e.target.matches('.filter'))return;$$('.filter').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');currentFilter=e.target.dataset.filter;renderWords()});
   $('#wordList').addEventListener('click',e=>{const b=e.target.closest('[data-speak]');if(b)speak(b.dataset.speak)});
-  $('#settingsButton').addEventListener('click',openSettings);$('#dailyGoal').addEventListener('input',e=>{$('#goalValue').textContent=e.target.value;updateStudyEstimate(e.target.value)});
-  $('#settingsDialog').addEventListener('close',()=>{data.settings.goal=Number($('#dailyGoal').value);data.settings.autoSpeak=$('#autoSpeak').checked;save();renderHome()});
+  $('#settingsButton').addEventListener('click',()=>{openSettings();renderTestControls()});$('#dailyGoal').addEventListener('input',e=>{$('#goalValue').textContent=e.target.value;updateStudyEstimate(e.target.value)});
+  $('#settingsDialog').addEventListener('close',()=>{if(skipSettingsClose){skipSettingsClose=false;return}data.settings.goal=Number($('#dailyGoal').value);data.settings.autoSpeak=$('#autoSpeak').checked;save();renderHome()});
   $('#exportButton').addEventListener('click',exportProgress);$('#importButton').addEventListener('click',()=>$('#importFile').click());$('#importFile').addEventListener('change',e=>{const file=e.target.files?.[0];if(file)importProgress(file)});
+  $('#enterTestMode').addEventListener('click',enterTestMode);
+  $$('.test-day-button').forEach(button=>button.addEventListener('click',()=>jumpTestDay(button.dataset.day)));
+  $('#resetTestMode').addEventListener('click',resetTestMode);$('#exitTestMode').addEventListener('click',exitTestMode);
   $('#resetButton').addEventListener('click',()=>{if(confirm('确定清空这台设备上的全部学习记录吗？这一步不能恢复。')){data=fresh();save();$('#settingsDialog').close();renderHome();toast('学习记录已清空')}});
   $('#starsChip').addEventListener('click',()=>toast(`你已经收集了 ${data.stars} 颗星星！`));
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){renderHome();showView('homeView')}});
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=12',{updateViaCache:'none'}).catch(()=>{});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=13',{updateViaCache:'none'}).catch(()=>{});
   renderHome();
 })();

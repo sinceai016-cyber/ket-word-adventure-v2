@@ -9,12 +9,13 @@
   <meta property="og:description" content="每天10词，按记忆规律自动复习">
   <meta property="og:image" content="word-planet-hero.png">
   <title>KET 单词星球</title>
-  <link rel="manifest" href="manifest.webmanifest?v=11">
-  <link rel="stylesheet" href="styles.css?v=11">
-  <link rel="stylesheet" href="overrides.css?v=11">
+  <link rel="manifest" href="manifest.webmanifest?v=13">
+  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="overrides.css?v=13">
 </head>
 <body>
   <div class="stars" aria-hidden="true"></div>
+  <div class="test-mode-bar" id="testModeBar" hidden><span>🧪 家长测试中</span><b id="testModeDate"></b><small>正式学习记录未受影响</small></div>
   <header class="topbar">
     <a class="brand" href="#home" aria-label="返回首页"><span class="brand-mark">🦉</span><span>KET 单词星球</span></a>
     <div class="top-stats">
@@ -140,7 +141,27 @@
         <p>按照当前学习记录估算；遇到记不清的词，完成时间会自动顺延。</p>
       </div>
       <label class="switch-row"><span><b>自动朗读</b><small>打开单词卡时读一遍</small></span><input id="autoSpeak" type="checkbox" checked></label>
-      <div class="setting-info"><b>记忆安排</b><p>新学当天 → 第1天 → 第3天 → 第7天 → 第14天 → 第30天。记不清的词会自动提前再见。</p></div>
+      <div class="setting-info"><b>记忆安排</b><p>新学当天 → 第1天 → 第3天 → 第7天 → 第14天 → 第30天 → 第60天。记不清的词会从第二天重新开始本轮复习。</p></div>
+      <section class="test-setting">
+        <div class="test-setting-title"><span>🧪</span><div><b>家长测试模式</b><p>快速模拟一个月以上的复习过程，测试记录与正式记录完全分开。</p></div></div>
+        <div id="testInactive">
+          <button type="button" class="test-enter-button" id="enterTestMode">进入测试模式</button>
+        </div>
+        <div id="testActive" hidden>
+          <div class="test-date-card"><small>测试开始日期 <b id="testStartDate"></b></small><strong>当前模拟：<span id="testCurrentDate"></span></strong></div>
+          <p class="test-guide">先在第0天学习5个词，再依次跳到下面的日期检查“开始复习”。</p>
+          <div class="test-day-grid">
+            <button type="button" class="test-day-button" data-day="0">第0天</button>
+            <button type="button" class="test-day-button" data-day="1">第1天</button>
+            <button type="button" class="test-day-button" data-day="3">第3天</button>
+            <button type="button" class="test-day-button" data-day="7">第7天</button>
+            <button type="button" class="test-day-button" data-day="14">第14天</button>
+            <button type="button" class="test-day-button" data-day="30">第30天</button>
+            <button type="button" class="test-day-button" data-day="60">第60天</button>
+          </div>
+          <div class="test-actions"><button type="button" id="resetTestMode">重新测试</button><button type="button" id="exitTestMode">退出测试模式</button></div>
+        </div>
+      </section>
       <div class="backup-setting">
         <div><b>学习记录备份</b><p>换网址或设备时，用备份文件恢复学习进度。</p></div>
         <div class="backup-actions">
@@ -155,7 +176,8 @@
   </dialog>
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="words.js?v=12"></script>
-  <script src="app.js?v=12"></script>
+  <script src="words.js?v=13"></script>
+  <script src="schedule.js?v=13"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

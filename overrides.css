@@ -206,3 +206,28 @@
   .review-session .word-card h2{font-size:36px}
   .review-session .meaning-choices button{font-size:15px}
 }
+
+/* 简单模式的新词学习页：保留记忆图片，同时消除大块空白，让下一词按钮完整留在一屏内。 */
+@media(max-width:760px){
+  .simple-mode .session-view:not(.review-session) .mode-pill{display:none}
+  .simple-mode .session-view:not(.review-session) .session-top{gap:10px}
+  .simple-mode .session-view:not(.review-session) .round-back{width:42px;height:42px;font-size:30px}
+  .simple-mode .session-view:not(.review-session) .session-progress{height:10px}
+  .simple-mode .session-view:not(.review-session) .word-card{min-height:0;margin-top:9px;padding:16px 16px 14px;border-radius:24px}
+  .simple-mode .session-view:not(.review-session) .word-card:after{width:100px;height:100px;right:-48px;bottom:-52px}
+  .simple-mode .session-view:not(.review-session) .card-planet{font-size:36px;line-height:1}
+  .simple-mode .session-view:not(.review-session) .sound-button{width:60px;height:60px;right:13px;top:13px;border-radius:19px;font-size:28px}
+  .simple-mode .session-view:not(.review-session) .part{margin:10px 0 3px;font-size:12px}
+  .simple-mode .session-view:not(.review-session) .word-card h2{font-size:clamp(38px,12vw,54px)}
+  .simple-mode .session-view:not(.review-session) .phonetic{margin:5px 0 10px;font-size:16px}
+  .simple-mode .session-view:not(.review-session) .answer-area{padding-top:10px}
+  .simple-mode .session-view:not(.review-session) .answer-area h3{margin-bottom:7px;font-size:25px}
+  .simple-mode .session-view:not(.review-session) .example{margin-bottom:2px;font-size:15px;line-height:1.35}
+  .simple-mode .session-view:not(.review-session) .example-zh{margin-bottom:0;font-size:12px;line-height:1.35}
+  .simple-mode .session-view:not(.review-session) .simple-card-next{min-height:54px;margin-top:8px;border-radius:16px;font-size:18px}
+}
+
+@media(max-width:380px){
+  .simple-mode .session-view:not(.review-session) .word-card{padding-left:12px;padding-right:12px}
+  .simple-mode .session-view:not(.review-session) .word-card h2{font-size:38px}
+}

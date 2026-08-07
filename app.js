@@ -151,7 +151,7 @@
       setTimeout(()=>$('#spellingInput').focus(),180);
     }
     $('#wordCard').animate?.([{transform:'translateX(16px)',opacity:.4},{transform:'translateX(0)',opacity:1}],{duration:280,easing:'ease-out'});
-    if(sessionType==='review'&&matchMedia('(max-width:760px)').matches)scrollTo({top:0,behavior:'auto'});
+    if(matchMedia('(max-width:760px)').matches)scrollTo({top:0,behavior:'auto'});
     if(data.settings.autoSpeak&&(recallMode==='meaning'||recallMode==='audio-spelling'))setTimeout(()=>speak(w.word),300);
   }
   function reveal(){$('#revealArea').classList.add('hidden');$('#answerArea').classList.remove('hidden');$('#answerButtons').classList.remove('hidden')}
@@ -308,6 +308,6 @@
   $('#resetButton').addEventListener('click',()=>{if(confirm('确定清空这台设备上的全部学习记录吗？这一步不能恢复。')){data=fresh();save();$('#settingsDialog').close();renderHome();toast('学习记录已清空')}});
   $('#starsChip').addEventListener('click',()=>toast(`你已经收集了 ${data.stars} 颗星星！`));
   window.addEventListener('hashchange',()=>{if(location.hash==='#home'){renderHome();showView('homeView')}});
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=17',{updateViaCache:'none'}).catch(()=>{});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js?v=18',{updateViaCache:'none'}).catch(()=>{});
   renderHome();
 })();
